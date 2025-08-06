@@ -1,19 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Bell, LucideSearch } from "lucide-react";
 import { AppDispatch, RootState } from "@/app/Redux/store";
 import { fetchUserData } from "@/app/Redux/auth/userdata";
-import { HiOutlineLogout } from "react-icons/hi";
 import { TbLogout2 } from "react-icons/tb";
-import { IoSettingsOutline } from "react-icons/io5";
 import { LuSettings } from "react-icons/lu";
 import { useDashboard } from "@/app/Context/DahboardContext";
 import { useRouter } from "next/navigation";
-// Import the unread count selector
 import { selectUnreadCount } from "@/app/Redux/Notification/Notification";
-import { fetchAllNotifications } from "@/app/Redux/Notification/NotificationsThunk";
+import {
+  fetchAllNotifications,
+  addNewNotification,
+} from "@/app/Redux/Notification/NotificationsThunk";
+// import { subscribeToNotifications } from "@/app/Redux/Notification/pusher";
+import Cookies from "js-cookie";
+import toast from "react-hot-toast";
+import { subscribeToNotifications } from "@/app/Redux/pusher/pusherService";
 
 export default function TopBar() {
   const router = useRouter();
@@ -21,8 +25,9 @@ export default function TopBar() {
   const { loading, error, data } = useSelector(
     (state: RootState) => state.user
   );
- 
+
   const unreadCount = useSelector(selectUnreadCount);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (error === "Unauthorized") {
@@ -32,10 +37,42 @@ export default function TopBar() {
 
   const {
     isNotificationsModalOpen,
-    setIsNotificationsModalOpen
+    setIsNotificationsModalOpen,
+    logout,
+    setLogout,
+    pinIsSet,
+    setPinIsSet,
   } = useDashboard();
   const user = data?.data;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Set up Pusher subscription for real-time notifications
+  useEffect(() => {
+    const userId = user?.uuid
+    if (!userId) return;
+
+    const handleNewNotification = (data: any) => {
+      dispatch(addNewNotification(data));
+      dispatch(fetchAllNotifications());
+      // Show toast only if notifications modal is closed
+      if (!isNotificationsModalOpen) {
+        toast.success("You have a new notification");
+      }
+    };
+
+    // Subscribe to notifications
+    unsubscribeRef.current = subscribeToNotifications(
+      userId,
+      handleNewNotification
+    );
+
+    // Cleanup function
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
+  }, [dispatch, isNotificationsModalOpen]);
 
   // Fetch user data and notifications when component mounts
   useEffect(() => {
@@ -48,26 +85,20 @@ export default function TopBar() {
     dispatch(fetchAllNotifications());
   }, [dispatch, user]);
 
-useEffect(() => {
-  const pollInterval = 15000; 
-  const intervalId = setInterval(() => {
-    dispatch(fetchAllNotifications()); 
-  }, pollInterval);
-
-  return () => clearInterval(intervalId); 
-}, [dispatch]);
-
-  const { logout, setLogout, pinIsSet, setPinIsSet } = useDashboard();
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const dropdownElement = document.getElementById("dropdown-menu");
       const profileButton = event.target as HTMLElement;
-      
-      // Check if the click is outside the dropdown and not on the profile button
-      if (isDropdownOpen && dropdownElement && !dropdownElement.contains(event.target as Node) && !profileButton.closest(".profile-button")) {
+
+      if (
+        isDropdownOpen &&
+        dropdownElement &&
+        !dropdownElement.contains(event.target as Node)
+      ) {
+        if (!profileButton.closest(".profile-button")) {
           setIsDropdownOpen(false);
+        }
       }
     };
     document.addEventListener("click", handleClickOutside);
@@ -82,7 +113,9 @@ useEffect(() => {
   }, [user]);
 
   if (loading && !user) {
-    return <div className="flex justify-center p-4">Getting Information...</div>;
+    return (
+      <div className="flex justify-center p-4">Getting Information...</div>
+    );
   }
 
   return (
@@ -147,7 +180,13 @@ useEffect(() => {
             <div className="hidden sm:block">
               <p className="text-[10px] font-bold text-[#333333]">
                 {user
-                  ? `${user.first_name.charAt(0).toUpperCase()}${user.first_name.slice(1)} ${user.last_name.charAt(0).toUpperCase()}${user.last_name.slice(1)}`
+                  ? `${user.first_name
+                      .charAt(0)
+                      .toUpperCase()}${user.first_name.slice(
+                      1
+                    )} ${user.last_name
+                      .charAt(0)
+                      .toUpperCase()}${user.last_name.slice(1)}`
                   : "User Name"}
               </p>
               <p className="text-[8px] text-[#A1A6B0]">
@@ -158,7 +197,10 @@ useEffect(() => {
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div id="dropdown-menu" className="absolute right-2 top-20 w-[240px] bg-white rounded-md shadow-lg py-[35px] z-50">
+            <div
+              id="dropdown-menu"
+              className="absolute right-2 top-20 w-[240px] bg-white rounded-md shadow-lg py-[35px] z-50"
+            >
               {/* User Info */}
               <div className="px-6 mb-[32px] flex items-center">
                 <img
@@ -175,7 +217,13 @@ useEffect(() => {
                 <div>
                   <p className="text-[10px] font-bold text-[#333333]">
                     {user
-                      ? `${user.first_name.charAt(0).toUpperCase()}${user.first_name.slice(1)} ${user.last_name.charAt(0).toUpperCase()}${user.last_name.slice(1)}`
+                      ? `${user.first_name
+                          .charAt(0)
+                          .toUpperCase()}${user.first_name.slice(
+                          1
+                        )} ${user.last_name
+                          .charAt(0)
+                          .toUpperCase()}${user.last_name.slice(1)}`
                       : "User Name"}
                   </p>
                   <p className="text-[8px] font-semibold text-[#A1A6B0] truncate mt-[8px]">
@@ -187,7 +235,10 @@ useEffect(() => {
               {/* Menu Items */}
               <div className="space-y-[16px]">
                 <div
-                  onClick={() => setIsNotificationsModalOpen(true)}
+                  onClick={() => {
+                    setIsNotificationsModalOpen(true);
+                    setIsDropdownOpen(false);
+                  }}
                   className="block px-6 py-3 text-sm font-semibold text-[#8A8B9F] hover:bg-[#F5F5F5] hover:text-[#333333] transition-colors duration-200 flex items-center cursor-pointer"
                 >
                   <Bell size={20} className="mr-3" /> Notification

@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchAllNotifications, markNotificationAsRead } from "./NotificationsThunk";
+import { fetchAllNotifications, markNotificationAsRead, addNewNotification } from "./NotificationsThunk";
 
 interface NotificationData {
   message: string;
@@ -28,6 +28,7 @@ interface NotificationState {
   unreadCount: number;
   markAsReadLoading: boolean;
   markAsReadError: string | null;
+  hasUnseenNotifications: boolean; // New state for visual indicator
 }
 
 const initialState: NotificationState = {
@@ -36,7 +37,8 @@ const initialState: NotificationState = {
   error: null,
   unreadCount: 0,
   markAsReadLoading: false,
-  markAsReadError: null
+  markAsReadError: null,
+  hasUnseenNotifications: false
 };
 
 const notificationSlice = createSlice({
@@ -48,6 +50,10 @@ const notificationSlice = createSlice({
       state.unreadCount = 0;
       state.error = null;
       state.markAsReadError = null;
+      state.hasUnseenNotifications = false;
+    },
+    resetUnseenFlag: (state) => {
+      state.hasUnseenNotifications = false;
     }
   },
   extraReducers: (builder) => {
@@ -62,6 +68,7 @@ const notificationSlice = createSlice({
         if (action.payload.error === false) {
           state.notifications = action.payload.data;
           state.unreadCount = action.payload.data.filter((n: Notification) => !n.read_at).length;
+          state.hasUnseenNotifications = false; 
         } else {
           state.error = action.payload.message || "Failed to fetch notifications";
         }
@@ -93,11 +100,32 @@ const notificationSlice = createSlice({
       .addCase(markNotificationAsRead.rejected, (state, action) => {
         state.markAsReadLoading = false;
         state.markAsReadError = action.payload as string || "Failed to mark notification as read";
+      })
+      
+      // Add New Notification (Pusher)
+      .addCase(addNewNotification.fulfilled, (state, action) => {
+        // Check if notification already exists to prevent duplicates
+        const exists = state.notifications.some(n => n.id === action.payload.id);
+        if (!exists) {
+          // Add new notification to the beginning of the array
+          state.notifications = [action.payload, ...state.notifications];
+          
+          // Increment unread count if notification is unread
+          if (!action.payload.read_at) {
+            state.unreadCount += 1;
+            state.hasUnseenNotifications = true;
+          }
+          
+          // Optional: Limit the number of stored notifications
+          if (state.notifications.length > 100) {
+            state.notifications = state.notifications.slice(0, 100);
+          }
+        }
       });
   },
 });
 
-export const { clearNotifications } = notificationSlice.actions;
+export const { clearNotifications, resetUnseenFlag } = notificationSlice.actions;
 
 // Selectors
 export const selectAllNotifications = (state: { notifications: NotificationState }) => 
@@ -120,5 +148,8 @@ export const selectMarkAsReadLoading = (state: { notifications: NotificationStat
 
 export const selectMarkAsReadError = (state: { notifications: NotificationState }) =>
   state.notifications.markAsReadError;
+
+export const selectHasUnseenNotifications = (state: { notifications: NotificationState }) =>
+  state.notifications.hasUnseenNotifications;
 
 export default notificationSlice.reducer;

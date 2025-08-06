@@ -30,14 +30,14 @@ const DeclineRequest: React.FC<ModalProps> = ({ isOpen, onClose }) => {
     user_info_status
   } = useSelector((state: RootState) => state.loanRequest.single_loan_products_request);
 
-  useEffect(() => {
-    const currentRequestParams = {
-      id: [selectedIds],
-    };
-    if (isOpen) {
-      dispatch(_single_loan_products_request(currentRequestParams));
-    }
-  }, [isOpen, selectedIds, dispatch]);
+  // useEffect(() => {
+  //   const currentRequestParams = {
+  //     id: [selectedIds],
+  //   };
+  //   if (isOpen) {
+  //     dispatch(_single_loan_products_request(currentRequestParams));
+  //   }
+  // }, [isOpen, selectedIds, dispatch]);
 
   // Reset state when modal closes or when operations complete
   useEffect(() => {

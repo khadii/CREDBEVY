@@ -1,6 +1,6 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // Helper function for unauthorized error handling
@@ -68,7 +68,7 @@ export const markNotificationAsRead = createAsyncThunk(
 
       const response = await axios.post(
         `${BASE_URL}/api/partner/notifications/mark-as-read/${notificationId}`,
-        {}, // Body can be used if needed
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,6 +90,24 @@ export const markNotificationAsRead = createAsyncThunk(
       } else {
         return rejectWithValue("An unexpected error occurred. Please try again.");
       }
+    }
+  }
+);
+
+export const addNewNotification = createAsyncThunk(
+  "notifications/addNew",
+  async (notification: any, { rejectWithValue }) => {
+    try {
+      // Transform the notification to match your frontend format if needed
+      const transformedNotification = {
+        ...notification,
+        read_at: notification.read_at || null,
+        created_at: notification.created_at || new Date().toISOString()
+      };
+      
+      return transformedNotification;
+    } catch (error: any) {
+      return rejectWithValue("Failed to add new notification");
     }
   }
 );

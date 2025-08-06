@@ -16,11 +16,11 @@ export default function LoanModal({open, setOpen, setState,titleName,buttonName}
     data: LoanRequest_Data,
   } = useSelector((state: RootState) => state.loanRequest.single_loan_products_request);
 
-  useEffect(() => {
-    if (open && selectedIds && selectedIds.length > 0) {
-      dispatch(_single_loan_products_request({ id: selectedIds }));
-    }
-  }, [dispatch, selectedIds, open]);
+  // useEffect(() => {
+  //   if (open && selectedIds && selectedIds.length > 0) {
+  //     // dispatch(_single_loan_products_request({ id: selectedIds }));
+  //   }
+  // }, [dispatch, selectedIds, open]);
 
   if (!open) return null;
 

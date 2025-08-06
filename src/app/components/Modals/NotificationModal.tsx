@@ -1,26 +1,76 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Image from 'next/image';
-
-import { selectAllNotifications, selectNotificationsLoading, selectUnreadCount } from '@/app/Redux/Notification/Notification';
-import { fetchAllNotifications, markNotificationAsRead } from '@/app/Redux/Notification/NotificationsThunk';
-import { AppDispatch } from '@/app/Redux/store';
+import Cookies from "js-cookie";
+import toast from 'react-hot-toast';
+import { 
+  selectAllNotifications, 
+  selectNotificationsLoading, 
+  selectUnreadCount,
+  selectHasUnseenNotifications,
+  resetUnseenFlag
+} from '@/app/Redux/Notification/Notification';
+import { 
+  fetchAllNotifications, 
+  markNotificationAsRead,
+  addNewNotification 
+} from '@/app/Redux/Notification/NotificationsThunk';
+import { AppDispatch, RootState } from '@/app/Redux/store';
 import { Notification } from '@/app/Redux/Notification/Notification'; 
+// import { subscribeToNotifications } from '@/app/Redux/Notification/pusher';
 import MessageDetailModal from './NOtificationMessage';
 import AnimatedLoader, { AnimatedLoader2 } from '../animation';
+import { subscribeToNotifications } from '@/app/Redux/pusher/pusherService';
 
-const App = ({ isNotificationsModalOpen, setIsNotificationsModalOpen }: { isNotificationsModalOpen: boolean, setIsNotificationsModalOpen: (isOpen: boolean) => void }) => {
+const App = ({ isNotificationsModalOpen, setIsNotificationsModalOpen }: { 
+  isNotificationsModalOpen: boolean, 
+  setIsNotificationsModalOpen: (isOpen: boolean) => void 
+}) => {
   const [activeTab, setActiveTab] = useState('View All');
   const [isMessageDetailModalOpen, setIsMessageDetailModalOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
 
   const notifications = useSelector(selectAllNotifications);
   const unreadCount = useSelector(selectUnreadCount);
   const isLoading = useSelector(selectNotificationsLoading);
-
+  const hasUnseenNotifications = useSelector(selectHasUnseenNotifications);
+  const { loading, error, data } = useSelector(
+    (state: RootState) => state.user
+  );
   const modalRef = useRef<HTMLDivElement>(null);
+  const user = data?.data;
+  useEffect(() => {
+    const userId = user?.uuid
+    if (!userId) return;
+
+    const handleNewNotification = (data: any) => {
+      dispatch(addNewNotification(data));
+      dispatch(fetchAllNotifications());
+      if (!isNotificationsModalOpen) {
+        toast.success('You have a new notification');
+      }
+    };
+
+    // Subscribe to notifications
+    unsubscribeRef.current = subscribeToNotifications(userId, handleNewNotification);
+
+    // Cleanup function
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
+  }, [dispatch, isNotificationsModalOpen]);
+
+  // Reset unseen flag when modal opens
+  useEffect(() => {
+    if (isNotificationsModalOpen && hasUnseenNotifications) {
+      dispatch(resetUnseenFlag());
+    }
+  }, [isNotificationsModalOpen, hasUnseenNotifications, dispatch]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -31,27 +81,13 @@ const App = ({ isNotificationsModalOpen, setIsNotificationsModalOpen }: { isNoti
 
     if (isNotificationsModalOpen) {
       document.addEventListener('mousedown', handleOutsideClick);
+      dispatch(fetchAllNotifications());
     }
 
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
-  }, [isNotificationsModalOpen, setIsNotificationsModalOpen, isMessageDetailModalOpen]); 
-
-  useEffect(() => {
-    if (isNotificationsModalOpen) {
-      dispatch(fetchAllNotifications());
-    }
-  }, [dispatch, isNotificationsModalOpen]);
-  useEffect(() => {
-  const pollInterval = 15000; 
-  const intervalId = setInterval(() => {
-    dispatch(fetchAllNotifications()); 
-  }, pollInterval);
-
-  return () => clearInterval(intervalId); 
-}, [dispatch]);
-
+  }, [isNotificationsModalOpen, setIsNotificationsModalOpen, isMessageDetailModalOpen, dispatch]); 
 
   const filteredNotifications = notifications?.filter((notification: Notification) => {
     switch (activeTab) {
@@ -89,6 +125,9 @@ const App = ({ isNotificationsModalOpen, setIsNotificationsModalOpen }: { isNoti
           <div className="flex justify-between items-center p-4">
             <h2 className="text-base font-semibold text-[#333333]">
               Notification {unreadCount > 0 && `(${unreadCount})`}
+              {hasUnseenNotifications && !isNotificationsModalOpen && (
+                <span className="ml-2 inline-block w-2 h-2 rounded-full bg-red-500"></span>
+              )}
             </h2>
             <button
               onClick={() => setIsNotificationsModalOpen(false)}
@@ -127,7 +166,7 @@ const App = ({ isNotificationsModalOpen, setIsNotificationsModalOpen }: { isNoti
           {/* Notification List Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {isLoading ? (
-  <div >           <AnimatedLoader2 isLoading={isLoading}/></div>
+              <div><AnimatedLoader2 isLoading={isLoading}/></div>
             ) : filteredNotifications && filteredNotifications.length > 0 ? (
               filteredNotifications.map((notification: Notification) => (
                 <div
@@ -176,7 +215,7 @@ const App = ({ isNotificationsModalOpen, setIsNotificationsModalOpen }: { isNoti
           </div>
         </div>
       </div>
-       <MessageDetailModal
+      <MessageDetailModal
         isOpen={isMessageDetailModalOpen}
         notification={selectedNotification}
         onClose={handleCloseMessageDetailModal}

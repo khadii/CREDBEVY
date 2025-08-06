@@ -56,7 +56,7 @@ export default function Dashboard() {
 
   const params = {
     search: "",
-    single: false,
+    // single: false,
     sort_by: "DESC",
     start_date: "",
     end_date: "",
