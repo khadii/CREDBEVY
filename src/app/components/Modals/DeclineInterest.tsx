@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import Cookies from "js-cookie";
 import AnimatedLoader from "../animation";
+import { resetRejectState } from "@/app/Redux/Loan_request/loanConditon";
 
 interface ModalProps {
   isOpen: boolean;
@@ -84,6 +85,7 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
     if (rejectSuccess) {
       const productData = getProductCookie();
       dispatch(_single_loan_products_request({ id: productData }));
+       dispatch(resetRejectState());
       refreshData();
       toast.success(rejectData?.message || "Request declined successfully");
       onClose();
@@ -92,6 +94,7 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
       const productData = getProductCookie();
       toast.error(rejectError || "Failed to decline request");
       dispatch(_single_loan_products_request({ id: productData }));
+        dispatch(resetRejectState());
       setInterested(true);
       onClose();
     }
@@ -157,83 +160,14 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <><div className="hidden md:block">
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17191CBA]">
-        <div className="relative bg-white rounded-lg">
-          {rejectLoading || pinLoading ? (
-            <AnimatedLoader isLoading={rejectLoading || pinLoading} />
-          ) : (
-            <>
-              <div className="flex pl-[24px] pt-[24px] pr-[15px] justify-between w-full items-center">
-                <h2 className="text-[24px] font-bold text-[#333333]">
-                  Decline Request
-                </h2>
-                <button
-                  onClick={handleClose}
-                  className="text-[#333333] px-2 rounded-[4px] border font-bold text-xs"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="p-[24px] mt-[127px]">
-                <div className="w-full justify-center items-center flex">
-                  <div className="w-full">
-                    <p className="text-[16px] font-bold text-[#333333] mb-[24px] text-center">
-                      Input your transaction PIN to process request
-                    </p>
-
-                    <div className="flex justify-center space-x-6">
-                      {pin.map((digit, index) => (
-                        <input
-                          key={index}
-                          ref={(el) => {
-                            if (el) {
-                              inputRefs.current[index] = el;
-                            }
-                          } }
-                          type="password"
-                          maxLength={1}
-                          value={digit}
-                          onChange={(e) => handleChange(index, e.target.value)}
-                          className={`w-[80px] h-[80px] border-[4px] ${errors.pin && digit === ""
-                              ? "border-red-500 focus:ring-red-500"
-                              : "border-[#156064] focus:ring-[#156064]"} rounded-[8px] focus:outline-none focus:ring-2 text-center text-[40px] font-bold mb-[134px]`} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                {errors.pin && (
-                  <p className="text-red-500 mb-4 text-center">{errors.pin}</p>
-                )}
-
-                <div className="flex space-x-[96px] justify-center">
-                  <button
-                    onClick={handleClose}
-                    className="px-[81px] py-[10px] border border-[#333333] rounded-[4px] text-[12px] font-bold text-[#333333]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="px-[81px] py-[10px] border border-[#156064] bg-[#156064] rounded-[4px] text-[12px] font-bold text-white"
-                    onClick={handleSubmit}
-                    disabled={pinLoading || rejectLoading}
-                  >
-                    {pinLoading || rejectLoading ? "Processing..." : "Done"}
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div></div><div className="md:hidden block">
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17191CBA] p-4">
-      <div className="relative bg-white rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17191CBA] p-4">
+      <div className="relative bg-white rounded-lg w-full max-w-md sm:max-w-lg">
         {rejectLoading || pinLoading ? (
           <AnimatedLoader isLoading={rejectLoading || pinLoading} />
         ) : (
           <>
-            <div className="flex pl-[24px] pt-[24px] pr-[15px] justify-between w-full items-center">
-              <h2 className="text-[24px] font-bold text-[#333333]">
+            <div className="flex px-4 sm:pl-[24px] pt-[24px] sm:pr-[15px] justify-between w-full items-center">
+              <h2 className="text-lg sm:text-[24px] font-bold text-[#333333]">
                 Decline Request
               </h2>
               <button
@@ -243,14 +177,15 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                 ✕
               </button>
             </div>
-            <div className="p-[24px] mt-[40px] sm:mt-[127px]">
+            <div className="p-4 sm:p-[24px] mt-8 sm:mt-[127px]">
               <div className="w-full justify-center items-center flex">
                 <div className="w-full">
-                  <p className="text-[16px] font-bold text-[#333333] mb-[24px] text-center">
+                  <p className="text-sm sm:text-[16px] font-bold text-[#333333] mb-6 sm:mb-[24px] text-center px-2">
                     Input your transaction PIN to process request
                   </p>
 
-                  <div className="flex justify-center space-x-2 sm:space-x-6">
+                  {/* Responsive PIN inputs */}
+                  <div className="flex justify-center gap-2 sm:gap-4 md:gap-6 mb-6 sm:mb-[134px]">
                     {pin.map((digit, index) => (
                       <input
                         key={index}
@@ -263,29 +198,40 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                         maxLength={1}
                         value={digit}
                         onChange={(e) => handleChange(index, e.target.value)}
-                        className={`w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] border-[4px] ${
-                          errors.pin && digit === ""
+                        className={`
+                          w-12 h-12 
+                          sm:w-16 sm:h-16 
+                          md:w-[80px] md:h-[80px] 
+                          border-2 sm:border-[4px] 
+                          ${errors.pin && digit === ""
                             ? "border-red-500 focus:ring-red-500"
                             : "border-[#156064] focus:ring-[#156064]"
-                        } rounded-[8px] focus:outline-none focus:ring-2 text-center text-[32px] sm:text-[40px] font-bold mb-[40px] sm:mb-[134px]`}
+                          } 
+                          rounded-[8px] 
+                          focus:outline-none focus:ring-2 
+                          text-center 
+                          text-xl sm:text-2xl md:text-[40px] 
+                          font-bold
+                        `}
                       />
                     ))}
                   </div>
                 </div>
               </div>
+              
               {errors.pin && (
-                <p className="text-red-500 mb-4 text-center">{errors.pin}</p>
+                <p className="text-red-500 mb-4 text-center text-sm">{errors.pin}</p>
               )}
 
-              <div className="flex flex-col sm:flex-row sm:space-x-[96px] space-y-4 sm:space-y-0 justify-center">
+              <div className="flex flex-col md:flex-row gap-4 md:gap-8 lg:gap-[96px] justify-center">
                 <button
                   onClick={handleClose}
-                  className="px-4 py-[10px] sm:px-[81px] border border-[#333333] rounded-[4px] text-[12px] font-bold text-[#333333]"
+                  className="px-6 md:px-12 lg:px-[81px] py-[10px] border border-[#333333] rounded-[4px] text-[12px] font-bold text-[#333333] min-w-[120px]"
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-[10px] sm:px-[81px] border border-[#156064] bg-[#156064] rounded-[4px] text-[12px] font-bold text-white"
+                  className="px-6 md:px-12 lg:px-[81px] py-[10px] border border-[#156064] bg-[#156064] rounded-[4px] text-[12px] font-bold text-white min-w-[120px]"
                   onClick={handleSubmit}
                   disabled={pinLoading || rejectLoading}
                 >
@@ -297,7 +243,6 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
         )}
       </div>
     </div>
-      </div></>
   );
 };
 

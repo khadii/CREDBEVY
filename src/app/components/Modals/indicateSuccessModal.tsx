@@ -18,15 +18,18 @@ export default function IndicateSuccessModal({
 }) {
   return (
     <>
-      <div className="flex pl-[24px] pt-[24px] pr-[15px] justify-between w-[450px] items-center">
-        <h2 className="text-[24px] font-bold text-[#333333]">{header}</h2>
-        <button
-          onClick={() => setOpen(false)}
-          className="text-[#333333] px-2 rounded-[4px] border font-bold text-xs"
-        >
-          ✕
-        </button>
-      </div>
+   <div className="flex justify-between items-center w-full max-w-full px-4 sm:px-6 pt-6">
+  <h2 className="text-lg sm:text-2xl font-bold text-[#333333] break-words">
+    {header}
+  </h2>
+  <button
+    onClick={() => setOpen(false)}
+    className="text-[#333333] px-2 rounded-md border font-bold text-xs"
+  >
+    ✕
+  </button>
+</div>
+
       <div className="p-[24px] mt-[100px]">
         <div className="w-full justify-center items-center flex">
           <div className="w-full flex flex-col items-center">
@@ -46,7 +49,7 @@ export default function IndicateSuccessModal({
           </div>
         </div>
 
-        <div className="flex justify-between gap-4 mt-[44px]">
+        <div className="flex justify-between gap-4 mt-[44px] md:flex-row flex-col ">
           <button
             onClick={() => setOpen(false)}
             className="px-[81px] py-[10px] border border-[#333333] rounded-[4px] text-[12px] font-bold text-[#333333]"

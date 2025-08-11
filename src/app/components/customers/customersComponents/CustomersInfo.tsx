@@ -27,12 +27,12 @@ export default function RepaymentInfo({ id }: RepaymentDetailsProps) {
 
   const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    if (id) {
-      dispatch(single_loan_repayments({ user_id: id }));
-      dispatch(fetchSingleLoanRequest(id) as any);
-    }
-  }, [dispatch, id]);
+  // useEffect(() => {
+  //   if (id) {
+  //     dispatch(single_loan_repayments({ user_id: id }));
+  //     dispatch(fetchSingleLoanRequest(id) as any);
+  //   }
+  // }, [dispatch, id]);
 
   const summary = repaymentData?.loan_summary || {
     loan_amount: 0,

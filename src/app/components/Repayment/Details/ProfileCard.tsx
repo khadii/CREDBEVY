@@ -12,6 +12,7 @@ import Image from "next/image";
 export default function ProfileCard({ id }: { id: any }) {
   const { data, loading, error } = useSelector((state: RootState) => state.sinleloanRepayment);
   
+
   // Get user data from Redux store or use fallback if not available
   const user = data?.user_information || {
     firstname: "",
@@ -105,7 +106,7 @@ export default function ProfileCard({ id }: { id: any }) {
 
       {/* Buttons */}
       <div className="mt-6 grid justify-center gap-2">
-        <div className="w-[83px] h-[23px] rounded-[16px] border border-solid pt-[2px] pr-[8px] pb-[2px] pl-[6px] flex justify-center items-center text-xs font-semibold text-[#42BE65] border-[#BFFFD1]">
+        {/* <div className="w-[83px] h-[23px] rounded-[16px] border border-solid pt-[2px] pr-[8px] pb-[2px] pl-[6px] flex justify-center items-center text-xs font-semibold text-[#42BE65] border-[#BFFFD1]">
           <Image 
             src="/Image/appproveddot.svg" 
             alt="Approved icon" 
@@ -114,14 +115,14 @@ export default function ProfileCard({ id }: { id: any }) {
             className="mr-1" 
           />
           Repaid
-        </div>
+        </div> */}
       </div>
 
       {/* Credit Score */}
       <p className="mt-[32px] text-[12px] font-bold text-[#8A8B9F]">
         Credit Score
       </p>
-      <p className="text-[32px] font-bold text-[#42BE65]">{credit_score}</p>
+      <p className={`text-[32px] font-bold ${getCreditRating(credit_score).color}`}>{credit_score}</p>
 
       {/* User Details */}
       <div className="w-full space-y-5 mt-[38px] flex flex-col items-center justify-center px-[23px]">
@@ -142,3 +143,12 @@ export default function ProfileCard({ id }: { id: any }) {
     </div>
   );
 }
+
+
+const getCreditRating = (score: number): { text: string; color: string } => {
+  if (score >= 800) return { text: "Excellent", color: "text-emerald-500" };
+  if (score >= 740) return { text: "Very Good", color: "text-emerald-500" };
+  if (score >= 670) return { text: "Good", color: "text-emerald-500" };
+  if (score >= 580) return { text: "Fair", color: "text-yellow-500" };
+  return { text: "Poor", color: "text-red-500" };
+};

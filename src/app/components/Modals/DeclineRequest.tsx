@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import AnimatedLoader from "../animation";
 import { _pending_loans } from "@/app/Redux/dashboard/dashboardThunk";
+import { resetDeclineState } from "@/app/Redux/Loan_request/loanInterestSlice";
+import Cookies from "js-cookie";
 
 interface ModalProps {
   isOpen: boolean;
@@ -40,22 +42,41 @@ const DeclineRequest: React.FC<ModalProps> = ({ isOpen, onClose }) => {
   // }, [isOpen, selectedIds, dispatch]);
 
   // Reset state when modal closes or when operations complete
+
+    const getProductCookie = () => {
+    try {
+      const productCookie = Cookies.get("product_id");
+      if (!productCookie) return null;
+      if (typeof productCookie === 'object') return productCookie;
+      if (!productCookie.startsWith("{")) return productCookie;
+      return JSON.parse(productCookie);
+    } catch (error) {
+      console.error("Failed to parse product cookie:", error);
+      Cookies.remove("product_id");
+      return null;
+    }
+  };
   useEffect(() => {
     if (declineSuccess) {
       toast.success(declineData?.message || 'Request declined successfully');
       refreshData();
       setInterested(false);
       handleClose();
-         dispatch(_pending_loans({
-  search: "",
-  min_amount: "",
-  max_amount: "",
-  start_date: ""
-}));
+         const productData = getProductCookie();
+       dispatch(_single_loan_products_request({ id: productData }));
+      dispatch(_pending_loans({
+        search: "",
+        min_amount: "",
+        max_amount: "",
+        start_date: ""
+      }));
     }
+          dispatch(resetDeclineState())
     if (declineError) {
       toast.error(declineError);
       handleClose();
+          dispatch(resetDeclineState())
+      dispatch(_single_loan_products_request(selectedIds));
     }
   }, [declineSuccess, declineError, declineData]);
 
@@ -74,8 +95,7 @@ const DeclineRequest: React.FC<ModalProps> = ({ isOpen, onClose }) => {
       const notinterestResult = await dispatch(decline_interest(currentRequestParams));
       
       if (notinterestResult.meta.requestStatus === 'fulfilled') {
-      
-        // Success handling moved to useEffect to ensure consistent behavior
+    
       }
     } catch (error) {
       console.error('Error processing request:', error);
@@ -93,14 +113,14 @@ const DeclineRequest: React.FC<ModalProps> = ({ isOpen, onClose }) => {
   };
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17191CBA] p-4 sm:p-0">
-      <div className="relative bg-white rounded-lg w-full max-w-[500px] sm:w-auto sm:max-w-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17191CBA] p-4">
+      <div className="relative bg-white rounded-lg w-full max-w-2xl sm:max-w-xl">
         {LoanRequest_loading ? (
           <AnimatedLoader isLoading={LoanRequest_loading}></AnimatedLoader>
         ) : (
           <>
-            <div className="flex pl-[24px] pt-[24px] pr-[15px] justify-between w-full items-center">
-              <h2 className="text-[24px] font-semibold text-[#333333]">
+            <div className="flex px-4 sm:pl-[24px] pt-[24px] sm:pr-[15px] justify-between w-full items-center">
+              <h2 className="text-lg sm:text-[24px] font-semibold text-[#333333]">
                 Decline Request
               </h2>
               <button 
@@ -112,26 +132,26 @@ const DeclineRequest: React.FC<ModalProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
 
-            <div className="p-[24px] mt-[98px]">
+            <div className="p-4 sm:p-[24px] mt-12 sm:mt-[98px]">
               <div className="w-full justify-center items-center">
-                <div className="w-full flex justify-center mb-[24px]">
+                <div className="w-full flex justify-center mb-6 sm:mb-[24px]">
                   <img
                     src="/Image/close-circle.svg"
                     alt="Decline icon"
-                    className="w-[88px] h-[88px] object-cover items-center justify-center"
+                    className="w-16 h-16 sm:w-[88px] sm:h-[88px] object-cover items-center justify-center"
                   />
                 </div>
                 <div className="w-full">
-                  <p className="text-[24px] font-semibold text-[#333333] mb-[24px] text-center">
+                  <p className="text-xl sm:text-[24px] font-semibold text-[#333333] mb-6 sm:mb-[24px] text-center px-2">
                     Are you sure you want to decline this offer?
                   </p>
-                  <h1 className="mb-[105px] text-center text-[#8A8B9F] text-[14px] font-semibold">
-                    A loan request of {formatCurrency(LoanRequest_Data?.loan.request_details.loan_amount)} from a user with CS OF <span className="text-[#42BE65]">{LoanRequest_Data?.loan.user.credit_score}</span>
+                  <h1 className="mb-12 sm:mb-[105px] text-center text-[#8A8B9F] text-sm sm:text-[14px] font-semibold px-2">
+                    A loan request of {formatCurrency(LoanRequest_Data?.loan.request_details.loan_amount)} from a user with CS OF <span className={`${getCreditRating(LoanRequest_Data?.loan.user.credit_score).color}`}>{LoanRequest_Data?.loan.user.credit_score}</span>
                   </h1>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:space-x-[96px] space-y-4 sm:space-y-0">
+              <div className="flex flex-col md:flex-row  space-y-4 md:space-y-0 justify-between">
                 <button
                   onClick={handleClose}
                   disabled={LoanRequest_loading || declineLoading}
@@ -156,3 +176,13 @@ const DeclineRequest: React.FC<ModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default DeclineRequest;
+
+
+
+const getCreditRating = (score: number): { text: string; color: string } => {
+  if (score >= 800) return { text: "Excellent", color: "text-emerald-500" };
+  if (score >= 740) return { text: "Very Good", color: "text-emerald-500" };
+  if (score >= 670) return { text: "Good", color: "text-emerald-500" };
+  if (score >= 580) return { text: "Fair", color: "text-yellow-500" };
+  return { text: "Poor", color: "text-red-500" };
+};

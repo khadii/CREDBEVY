@@ -58,6 +58,20 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const handleSuccessClose = () => {
+    resetAll();
+    onClose(); 
+    const productData = getProductCookie();
+          dispatch(_single_loan_products_request({ id: productData }));
+          dispatch(_pending_loans({
+            search: "",
+            min_amount: "",
+            max_amount: "",
+            start_date: ""
+          }));
+          refreshData();
+  };
+
   const getProductCookie = () => {
     try {
       const productCookie = Cookies.get("product_id");
@@ -83,10 +97,11 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
       dispatch(resetPinState());
     }
   }, [pinSuccess, pinError, pinMessage, dispatch]);
+
   useEffect(() => {
     if (acceptSuccess) {
       setState(3);
-  resetSingleLoanProductsRequestSuccess()
+      dispatch(resetSingleLoanProductsRequestSuccess());
     }
     if (acceptError) {
       toast.error(acceptError);
@@ -151,15 +166,7 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
             data?: any;
           };
 
-          const productData = getProductCookie();
-          dispatch(_single_loan_products_request({ id: productData }));
-              dispatch(_pending_loans({
-        search: "",
-        min_amount: "",
-        max_amount: "",
-        start_date: ""
-      }));
-          refreshData();
+        
        
           if (response.error) {
             toast.error(response.message || "Loan approval failed");
@@ -178,12 +185,12 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
 
           const productData = getProductCookie();
           // toast.error(errorResponse.message);
-              dispatch(_pending_loans({
-        search: "",
-        min_amount: "",
-        max_amount: "",
-        start_date: ""
-      }));
+          dispatch(_pending_loans({
+            search: "",
+            min_amount: "",
+            max_amount: "",
+            start_date: ""
+          }));
           refreshData();
           dispatch(_single_loan_products_request({ id: productData }));
           setInterested(true);
@@ -200,8 +207,8 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17191CBA]">
-      <div className="relative bg-white rounded-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#17191CBA] p-4">
+      <div className="relative bg-white rounded-lg w-full max-w-md sm:max-w-lg">
         {acceptLoading || pinLoading ? (
           <AnimatedLoader isLoading={acceptLoading || pinLoading} />
         ) : (
@@ -217,8 +224,8 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
             )}
             {state === 2 && (
               <>
-                <div className="flex pl-[24px] pt-[24px] pr-[15px] justify-between w-full items-center">
-                  <h2 className="text-[24px] font-bold text-[#333333]">
+                <div className="flex px-4 sm:pl-[24px] pt-[24px] sm:pr-[15px] justify-between w-full items-center">
+                  <h2 className="text-lg sm:text-[24px] font-bold text-[#333333]">
                     Indicate Interest
                   </h2>
                   <button
@@ -228,14 +235,14 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                     ✕
                   </button>
                 </div>
-                <div className="p-[24px] mt-[127px]">
+                <div className="p-4 sm:p-[24px] mt-8 sm:mt-[127px]">
                   <div className="w-full justify-center items-center flex">
                     <div className="w-full">
-                      <p className="text-[16px] font-bold text-[#333333] mb-[24px] text-center">
+                      <p className="text-sm sm:text-[16px] font-bold text-[#333333] mb-6 sm:mb-[24px] text-center px-2">
                         Input your transaction PIN to process request
                       </p>
 
-                      <div className="flex justify-center space-x-6">
+                      <div className="flex justify-center space-x-3 sm:space-x-6 mb-6 sm:mb-[134px]">
                         {pin.map((digit, index) => (
                           <input
                             key={index}
@@ -254,19 +261,19 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                               errors.pin && digit === ""
                                 ? "border-red-500 focus:ring-red-500"
                                 : "border-[#156064] focus:ring-[#156064]"
-                            } rounded-[8px] focus:outline-none focus:ring-2 text-center text-[40px] font-bold mb-[134px]`}
+                            } rounded-[8px] focus:outline-none focus:ring-2 text-center text-[40px] font-bold`}
                           />
                         ))}
                       </div>
                     </div>
                   </div>
                   {errors.pin && (
-                    <p className="text-red-500 mb-4 text-center">
+                    <p className="text-red-500 mb-4 text-center text-sm">
                       {errors.pin}
                     </p>
                   )}
 
-                  <div className="flex space-x-[96px] justify-center">
+                  <div className="flex flex-col sm:flex-row sm:space-x-[96px] space-y-4 sm:space-y-0 justify-center">
                     <button
                       onClick={handleClose}
                       className="px-[81px] py-[10px] border border-[#333333] rounded-[4px] text-[12px] font-bold text-[#333333]"
@@ -286,8 +293,8 @@ const PinModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
             )}
             {state === 3 && (
               <IndicateSuccessModal
-                open={isOpen}
-                setOpen={handleClose}
+                open={true}
+                setOpen={handleSuccessClose}
                 setState={setState}
                 disc={"You now have full access to the borrower info"}
                 title={"Indication of Interest Successful"}

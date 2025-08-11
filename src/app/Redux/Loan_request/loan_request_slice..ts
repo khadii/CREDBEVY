@@ -131,16 +131,18 @@ const loanRequestSlice = createSlice({
         state.single_loan_products_request.loading = true;
         state.single_loan_products_request.error = null;
       })
-      .addCase(_single_loan_products_request.fulfilled, (state, action) => {
-        state.single_loan_products_request.loading = false;
-        if (action.payload.error) {
-          state.single_loan_products_request.error = action.payload.message;
-        }
-        state.single_loan_products_request.data = action.payload.data;
-        state.single_loan_products_request.success = action.payload.message;
-        state.single_loan_products_request.user_info_status =
-          action.payload.data?.loan.request_details.user_info_status;
-      })
+     .addCase(_single_loan_products_request.fulfilled, (state, action) => {
+  state.single_loan_products_request.loading = false;
+  if (action.payload.error) {
+    state.single_loan_products_request.error = action.payload.message;
+  }
+  state.single_loan_products_request.data = action.payload.data;
+  state.single_loan_products_request.success = action.payload.message;
+  
+  // Safely access nested properties
+  state.single_loan_products_request.user_info_status = 
+    action.payload.data?.loan?.request_details?.user_info_status ?? null;
+})
       .addCase(_single_loan_products_request.rejected, (state, action) => {
         state.single_loan_products_request.loading = false;
         state.single_loan_products_request.error = action.payload as string;

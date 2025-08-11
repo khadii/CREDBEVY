@@ -17,15 +17,15 @@ export default function ProfileCardCustomrs({ id }: { id: any }) {
  const dispatch = useDispatch<AppDispatch>();
   const { data: loanRequest, loading, error } = useSelector((state: RootState) => state.customerpersoninfo);
 
-  useEffect(() => {
-   if (id) {
-      dispatch(fetchSingleLoanRequest(id));
-    }
+  // useEffect(() => {
+  //  if (id) {
+  //     dispatch(fetchSingleLoanRequest(id));
+  //   }
 
-    return () => {
-      dispatch(clearLoanRequest());
-    };
-  }, [id, dispatch]);
+  //   return () => {
+  //     dispatch(clearLoanRequest());
+  //   };
+  // }, [id, dispatch]);
 
   if (loading) {
     return <div>Loading user data...</div>;
