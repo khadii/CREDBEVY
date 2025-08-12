@@ -11,7 +11,7 @@ interface ErrorDisplayProps {
 
 export default function ErrorDisplay({
   error,
-  title = "Unable to Load Data",
+  title = "Unable to Load Current Data",
   icon: IconComponent = FiAlertTriangle,
   onRetry,
 }: ErrorDisplayProps) {
