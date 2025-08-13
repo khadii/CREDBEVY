@@ -165,11 +165,11 @@ const pusherKey = process.env.NEXT_PUBLIC_PUSHER_APP_KEY || '55c933a520b4f61645f
 const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER || 'eu';
 
 if (!pusherKey || !pusherCluster || !BASE_URL) {
-  console.error('Missing environment variables:', {
-    pusherKey: !!pusherKey,
-    pusherCluster: !!pusherCluster,
-    baseUrl: !!BASE_URL,
-  });
+  // console.error('Missing environment variables:', {
+  //   pusherKey: !!pusherKey,
+  //   pusherCluster: !!pusherCluster,
+  //   baseUrl: !!BASE_URL,
+  // });
   throw new Error('Pusher key, cluster, or base URL must be defined in environment variables');
 }
 
@@ -183,12 +183,12 @@ const pusher = new Pusher(pusherKey, {
       authorize: (socketId, callback) => {
         const token = Cookies.get('authToken');
         if (!token) {
-          console.error('No authToken found in cookies');
+          // console.error('No authToken found in cookies');
           callback(new Error('No authToken found'), null);
           return;
         }
 
-        console.log('Authorizing Pusher channel:', channel.name, 'with socketId:', socketId);
+        // console.log('Authorizing Pusher channel:', channel.name, 'with socketId:', socketId);
         fetch(`${BASE_URL}/api/partner/notifications/auth`, {
           method: 'POST',
           headers: {
@@ -202,7 +202,7 @@ const pusher = new Pusher(pusherKey, {
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log('Pusher auth response:', data);
+            // console.log('Pusher auth response:', data);
             if (data.error) {
               callback(new Error(data.message), null);
             } else {
@@ -210,7 +210,7 @@ const pusher = new Pusher(pusherKey, {
             }
           })
           .catch((error) => {
-            console.error('Pusher auth fetch error:', error.message);
+            // console.error('Pusher auth fetch error:', error.message);
             callback(error, null);
           });
       },
@@ -220,44 +220,44 @@ const pusher = new Pusher(pusherKey, {
 
 export const subscribeToNotifications = (userId: string, callback: (data: any) => void) => {
   if (!userId) {
-    console.error('User ID is required for Pusher subscription');
+    // console.error('User ID is required for Pusher subscription');
     return () => {};
   }
 
   const channelName = `private-partner-user.${userId}`;
-  console.log(`Subscribing to channel: ${channelName}`);
+  // console.log(`Subscribing to channel: ${channelName}`);
   const channel = pusher.subscribe(channelName);
 
   // Bind to production notification event
   channel.bind('notification.created', (data: any) => {
-    console.log(`Pusher event received on ${channelName}: notification.created`, JSON.stringify(data, null, 2));
+    // console.log(`Pusher event received on ${channelName}: notification.created`, JSON.stringify(data, null, 2));
     callback(data);
   });
 
   // Temporary binding for testing (remove in production)
   channel.bind('test.notification', (data: any) => {
-    console.log(`Pusher test event received on ${channelName}: test.notification`, JSON.stringify(data, null, 2));
+    // console.log(`Pusher test event received on ${channelName}: test.notification`, JSON.stringify(data, null, 2));
     callback(data);
   });
 
   channel.bind('pusher:subscription_succeeded', () => {
-    console.log(`Successfully subscribed to ${channelName}`);
+    // console.log(`Successfully subscribed to ${channelName}`);
   });
 
   channel.bind('pusher:subscription_error', (error: any) => {
-    console.error(`Subscription error for ${channelName}:`, error);
+    // console.error(`Subscription error for ${channelName}:`, error);
   });
 
   pusher.connection.bind('error', (error: any) => {
-    console.error('Pusher connection error:', error);
+    // console.error('Pusher connection error:', error);
   });
 
   pusher.connection.bind('connected', () => {
-    console.log('Pusher connected successfully');
+    // console.log('Pusher connected successfully');
   });
 
   pusher.connection.bind('unavailable', () => {
-    console.error('Pusher connection unavailable');
+    // console.error('Pusher connection unavailable');
   });
 
   return () => {
@@ -271,7 +271,7 @@ export const subscribeToNotifications = (userId: string, callback: (data: any) =
 export const unsubscribeFromNotifications = (userId: string) => {
   if (userId) {
     const channelName = `private-partner-user.${userId}`;
-    console.log(`Unsubscribing from ${channelName}`);
+    // console.log(`Unsubscribing from ${channelName}`);
     pusher.unsubscribe(channelName);
   }
 };
