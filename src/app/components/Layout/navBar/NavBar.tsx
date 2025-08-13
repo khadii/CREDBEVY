@@ -46,33 +46,33 @@ export default function TopBar() {
   const user = data?.data;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Set up Pusher subscription for real-time notifications
-  useEffect(() => {
-    const userId = user?.uuid
-    if (!userId) return;
+  // // Set up Pusher subscription for real-time notifications
+  // useEffect(() => {
+  //   const userId = user?.uuid
+  //   if (!userId) return;
 
-    const handleNewNotification = (data: any) => {
-      dispatch(addNewNotification(data));
-      dispatch(fetchAllNotifications());
-      // Show toast only if notifications modal is closed
-      if (!isNotificationsModalOpen) {
-        toast.success("You have a new notification");
-      }
-    };
+  //   const handleNewNotification = (data: any) => {
+  //     dispatch(addNewNotification(data));
+  //     dispatch(fetchAllNotifications());
+  //     // Show toast only if notifications modal is closed
+  //     if (!isNotificationsModalOpen) {
+  //       toast.success("You have a new notification");
+  //     }
+  //   };
 
-    // Subscribe to notifications
-    unsubscribeRef.current = subscribeToNotifications(
-      userId,
-      handleNewNotification
-    );
+  //   // Subscribe to notifications
+  //   unsubscribeRef.current = subscribeToNotifications(
+  //     userId,
+  //     handleNewNotification
+  //   );
 
-    // Cleanup function
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-      }
-    };
-  }, [dispatch, isNotificationsModalOpen]);
+  //   // Cleanup function
+  //   return () => {
+  //     if (unsubscribeRef.current) {
+  //       unsubscribeRef.current();
+  //     }
+  //   };
+  // }, [dispatch, isNotificationsModalOpen]);
 
   // Fetch user data and notifications when component mounts
   useEffect(() => {
